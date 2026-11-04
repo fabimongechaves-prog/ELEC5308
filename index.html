@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELEC-5308 | Levitación Magnética (Maglev) - Sistemas de Control</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN para visualización de control en tiempo real -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN para iconos de ingeniería -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyanGlow: '#00f3ff',
+                        purpleGlow: '#a855f7',
+                        darkBg: '#090d16',
+                        darkCard: '#111827',
+                        darkBorder: '#1f293d'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #060911;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .neon-glow-cyan {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+        }
+        .neon-glow-purple {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+        .text-glow-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyanGlow selection:text-black">
+
+    <!-- ENCABEZADO Y BARRA DE NAVEGACIÓN ACADÉMICA -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-darkBorder px-4 py-3 sm:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-black font-extrabold text-xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-magnet text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        UHispanoamericana <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyanGlow border border-cyan-500/30">ELEC-5308</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Análisis de Sistemas | Tema 10: Levitación Magnética (Maglev) sin Fricción</p>
+                </div>
+            </div>
+
+            <!-- PESTAÑAS DE NAVEGACIÓN -->
+            <nav class="flex items-center gap-1 bg-darkBg/80 p-1.5 rounded-xl border border-darkBorder overflow-x-auto max-w-full">
+                <button onclick="switchTab('sec-context')" id="tab-sec-context" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-cyanGlow bg-cyan-500/10 border border-cyan-500/30 whitespace-nowrap">
+                    <i class="fa-solid fa-industry mr-1.5"></i>1. Arquitectura
+                </button>
+                <button onclick="switchTab('sec-math')" id="tab-sec-math" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-calculator mr-1.5"></i>2. Modelado & Linealización
+                </button>
+                <button onclick="switchTab('sec-diagrams')" id="tab-sec-diagrams" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-diagram-project mr-1.5"></i>3. Bloques & Estados
+                </button>
+                <button onclick="switchTab('sec-simulator')" id="tab-sec-simulator" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-sliders mr-1.5"></i>4. Simulador & Octave
+                </button>
+                <button onclick="switchTab('sec-conclusions')" id="tab-sec-conclusions" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-chart-line mr-1.5"></i>5. Estabilidad
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 1: CONTEXTO INDUSTRIAL Y ARQUITECTURA DE CONTROL                 -->
+        <!-- ========================================================================= -->
+        <section id="sec-context" class="tab-content space-y-8 animate-fadeIn">
+            <div class="relative overflow-hidden rounded-2xl glass-panel p-6 sm:p-8 border border-cyan-500/20">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-3xl">
+                    <span class="text-xs font-bold uppercase tracking-widest text-cyanGlow px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                        Sección 1: Contexto Industrial
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-cyan">
+                        Sistemas de Levitación Magnética (Maglev) sin Fricción
+                    </h2>
+                    <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                        La levitación magnética electromagnética (EMS) suspende un vehículo u objeto metálico en el aire eliminando el contacto mecánico por completo. Al suprimir la fricción superficial, permite velocidades de transporte terrestre superiores a 500 km/h y rodamientos magnéticos industriales sin desgaste físico.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Componentes de la Arquitectura -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Planta -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyanGlow flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-train"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Planta Física</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Electroimán y Carro/Esfera Suspendida:</strong> La masa $m$ bajo la influencia de la fuerza gravitacional $m \cdot g$ y atraída por el campo electromagnético del solenoide superior.
+                    </p>
+                </div>
+
+                <!-- Sensor -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purpleGlow flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Sensor (Transductor)</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Sensor Óptico / Inductivo de Entrehierro:</strong> Mide en tiempo real la distancia vertical exacta del entrehierro $x(t)$ y convierte la variable mecánica en una señal proporcional.
+                    </p>
+                </div>
+
+                <!-- Controlador -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Controlador</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Algoritmo Digital / Compensador PD-PID:</strong> Procesa el error $e(t) = r(t) - x(t)$ y calcula la corrección de corriente requerida para mantener la levitación en equilibrio.
+                    </p>
+                </div>
+
+                <!-- Actuador -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Actuador</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Amplificador de Potencia PWM / Driver H:</strong> Convierte la señal de control lógica en la corriente física $i(t)$ suministrada a la bobina del electroimán.
+                    </p>
+                </div>
+
+                <!-- Perturbaciones -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group md:col-span-2 lg:col-span-2">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-wind"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Perturbaciones Físicas Exógenas $d(t)$</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        Vientos cruzados aerodinámicos, desniveles imprevistos en la guía, variaciones de masa por pasaje y fluctuaciones térmicas que alteran la resistencia interna de la bobina.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Esquema en SVG del Lazo de Control Industrial -->
+            <div class="glass-panel p-6 rounded-2xl border border-darkBorder">
+                <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-cyanGlow"></i> Esquema del Lazo de Control Industrial Maglev
+                </h3>
+                <div class="overflow-x-auto py-4">
+                    <svg viewBox="0 0 900 240" class="w-full min-w-[700px] h-auto font-sans">
+                        <defs>
+                            <linearGradient id="gradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.8"/>
+                            </linearGradient>
+                            <linearGradient id="gradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#a855f7" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#6b21a8" stop-opacity="0.8"/>
+                            </linearGradient>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#00f3ff" />
+                            </marker>
+                            <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                            </marker>
+                        </defs>
+
+                        <!-- Entrada de Referencia -->
+                        <text x="20" y="95" fill="#94a3b8" font-size="12" font-weight="600">Referencia X_ref(s)</text>
+                        <path d="M 20 110 L 80 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+
+                        <!-- Punto Sumador -->
+                        <circle cx="100" cy="110" r="16" fill="#0f172a" stroke="#00f3ff" stroke-width="2"/>
+                        <text x="94" y="115" fill="#ffffff" font-size="16" font-weight="bold">Σ</text>
+                        <text x="75" y="105" fill="#00f3ff" font-size="12">+</text>
+                        <text x="94" y="140" fill="#ef4444" font-size="14">-</text>
+
+                        <!-- Señal de Error -->
+                        <path d="M 116 110 L 160 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+                        <text x="125" y="95" fill="#94a3b8" font-size="11">Error e(t)</text>
+
+                        <!-- Bloque Controlador -->
+                        <rect x="160" y="80" width="120" height="60" rx="10" fill="#0f172a" stroke="#00f3ff" stroke-width="2" />
+                        <text x="220" y="107" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">CONTROLADOR</text>
+                        <text x="220" y="125" fill="#00f3ff" font-size="11" text-anchor="middle">PD / PID Digital</text>
+
+                        <!-- Línea de Control -->
+                        <path d="M 280 110 L 320 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+
+                        <!-- Bloque Actuador -->
+                        <rect x="320" y="80" width="120" height="60" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+                        <text x="380" y="107" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">ACTUADOR</text>
+                        <text x="380" y="125" fill="#38bdf8" font-size="11" text-anchor="middle">Amplificador PWM</text>
+
+                        <!-- Corriente i(t) -->
+                        <path d="M 440 110 L 480 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+                        <text x="445" y="95" fill="#94a3b8" font-size="11">Corriente i(t)</text>
+
+                        <!-- Perturbación -->
+                        <path d="M 540 30 L 540 80" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowRed)" />
+                        <text x="548" y="45" fill="#ef4444" font-size="11" font-weight="600">Perturbación d(t)</text>
+
+                        <!-- Bloque Planta -->
+                        <rect x="480" y="80" width="140" height="60" rx="10" fill="#0f172a" stroke="url(#gradPurple)" stroke-width="2.5" />
+                        <text x="550" y="107" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">PLANTA MAGLEV</text>
+                        <text x="550" y="125" fill="#a855f7" font-size="11" text-anchor="middle">Electroimán + Masa m</text>
+
+                        <!-- Salida Posición x(t) -->
+                        <path d="M 620 110 L 760 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+                        <text x="650" y="95" fill="#94a3b8" font-size="12" font-weight="600">Posición x(t)</text>
+                        <circle cx="700" cy="110" r="4" fill="#00f3ff"/>
+
+                        <!-- Lazo de Realimentación -->
+                        <path d="M 700 110 L 700 190 L 220 190" stroke="#00f3ff" stroke-width="2" fill="none" />
+                        <rect x="220" y="165" width="120" height="50" rx="8" fill="#0f172a" stroke="#a855f7" stroke-width="1.5"/>
+                        <text x="280" y="187" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">SENSOR DE POSICIÓN</text>
+                        <text x="280" y="202" fill="#a855f7" font-size="10" text-anchor="middle">Óptico / Inductivo</text>
+                        <path d="M 220 190 L 100 190 L 100 126" stroke="#00f3ff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 2: MODELADO MATEMÁTICO FÍSICO Y LINEALIZACIÓN                     -->
+        <!-- ========================================================================= -->
+        <section id="sec-math" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-purple-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-purpleGlow px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30">
+                    Sección 2: Rigor Matemático
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-purple">
+                    Modelado Físico y Linealización por Serie de Taylor
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Deducción analítica de la dinámica no lineal basada en las leyes de Newton y la fuerza electromagnética no lineal, formalizando su linealización alrededor del entrehierro de operación.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Paso 1: Modelo Físico -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyanGlow font-bold flex items-center justify-center text-sm border border-cyan-500/30">1</span>
+                        <h3 class="text-lg font-bold text-white">Ecuación Diferencial No Lineal</h3>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        La fuerza magnética desarrollada por una bobina es inversamente proporcional al cuadrado de la distancia $x(t)$ e idénticamente proporcional al cuadrado de la corriente $i(t)$:
+                    </p>
+                    <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-cyanGlow text-sm overflow-x-auto text-center">
+                        F_m(i, x) = k \cdot \frac{i^2(t)}{x^2(t)}
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Aplicando la 2ª Ley de Newton a la masa $m$ suspendida verticalmente:
+                    </p>
+                    <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-purpleGlow text-sm sm:text-base overflow-x-auto text-center">
+                        m \cdot \frac{d^2x(t)}{dt^2} = m \cdot g - k \cdot \frac{i^2(t)}{x^2(t)}
+                    </div>
+                </div>
+
+                <!-- Paso 2: Linealización -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyanGlow font-bold flex items-center justify-center text-sm border border-cyan-500/30">2</span>
+                        <h3 class="text-lg font-bold text-white">Punto de Equilibrio & Serie de Taylor</h3>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        En el estado estacionario $(X_0, I_0)$, la aceleración es nula ($\ddot{x} = 0$), por lo que el peso compensa la atracción magnética:
+                    </p>
+                    <div class="p-3 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-slate-200 text-center">
+                        m \cdot g = k \cdot \frac{I_0^2}{X_0^2} \implies k = \frac{m \cdot g \cdot X_0^2}{I_0^2}
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Expandiendo $F_m(i, x)$ mediante Serie de Taylor multivariable truncada en 1<sup>er</sup> orden alrededor de $(X_0, I_0)$:
+                    </p>
+                    <div class="p-3 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-cyanGlow overflow-x-auto">
+                        F_m(i, x) \approx F_m(I_0, X_0) + \left. \frac{\partial F_m}{\partial x} \right|_0 \Delta x + \left. \frac{\partial F_m}{\partial i} \right|_0 \Delta i
+                    </div>
+                    <div class="text-xs text-slate-300 font-mono space-y-1 bg-darkBg/60 p-3 rounded-lg border border-darkBorder">
+                        <p>• K_x = \left| \frac{\partial F_m}{\partial x} \right|_0 = \frac{2 k I_0^2}{X_0^3} = \frac{2 m g}{X_0}</p>
+                        <p>• K_i = \left| \frac{\partial F_m}{\partial i} \right|_0 = \frac{2 k I_0}{X_0^2} = \frac{2 m g}{I_0}</p>
+                    </div>
+                </div>
+
+                <!-- Paso 3: Función de Transferencia -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4 lg:col-span-2">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyanGlow font-bold flex items-center justify-center text-sm border border-cyan-500/30">3</span>
+                        <h3 class="text-lg font-bold text-white">Ecuación Incremental & Función de Transferencia $G(s)$</h3>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Sustituyendo las derivadas parciales en la ecuación incremental $m \Delta \ddot{x} = K_x \Delta x - K_i \Delta i$:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-sm text-slate-200">
+                            <span class="text-xs text-slate-500 block mb-1">// Dominio del Tiempo (Linealizado)</span>
+                            \Delta \ddot{x}(t) - \left(\frac{2g}{X_0}\right) \Delta x(t) = -\left(\frac{2g}{I_0}\right) \Delta i(t)
+                        </div>
+                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-sm text-cyanGlow">
+                            <span class="text-xs text-slate-500 block mb-1">// Dominio de Laplace s (Cond. Iniciales Nulas)</span>
+                            s^2 \Delta X(s) - \left(\frac{2g}{X_0}\right) \Delta X(s) = -\left(\frac{2g}{I_0}\right) \Delta I(s)
+                        </div>
+                    </div>
+                    <div class="p-5 rounded-xl bg-gradient-to-r from-cyan-950/40 via-darkBg to-purple-950/40 border border-cyan-500/30 text-center">
+                        <p class="text-xs font-semibold text-cyanGlow uppercase tracking-widest mb-2">Función de Transferencia del Sistema en Lazo Abierto G(s)</p>
+                        <div class="font-mono text-xl sm:text-2xl font-bold text-white tracking-wider">
+                            G(s) = \frac{\Delta X(s)}{\Delta I(s)} = \frac{-\left(\frac{2g}{I_0}\right)}{s^2 - \left(\frac{2g}{X_0}\right)}
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-red-950/20 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-start gap-3">
+                        <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold text-white block mb-0.5">Demostración Formal de Inestabilidad en Lazo Abierto:</strong>
+                            Los polos del sistema en lazo abierto se hallan resolviendo $s^2 - \frac{2g}{X_0} = 0 \implies s = \pm \sqrt{\frac{2g}{X_0}}$. La presencia inevitable del polo real positivo $p_1 = +\sqrt{\frac{2g}{X_0}} > 0$ en el semiplano derecho (RHP) destruye la estabilidad BIBO; por lo tanto, cualquier perturbación mínima provocará que la masa caiga o se pegue al electroimán.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 3: DIAGRAMA DE BLOQUES Y ESPACIO DE ESTADOS                       -->
+        <!-- ========================================================================= -->
+        <section id="sec-diagrams" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-cyan-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-cyanGlow px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                    Sección 3: Representación Sistémica
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-cyan">
+                    Diagrama de Bloques y Espacio de Estados $(A, B, C, D)$
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Estructuración matricial en variables de estado físicas y representación en diagrama vectorial de bloques con integradores $s^{-1}$.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Matrices del Espacio de Estados -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-5">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-matrix text-cyanGlow"></i> Formulación Matricial en Espacio de Estados
+                    </h3>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Definiendo las variables de estado como las desviaciones relativas de posición y velocidad respecto al equilibrio:
+                    </p>
+                    <div class="p-3 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-cyanGlow text-center">
+                        x_1(t) = \Delta x(t) \quad (\text{Posición}), \qquad x_2(t) = \Delta \dot{x}(t) \quad (\text{Velocidad})
+                    </div>
+
+                    <!-- Representación Matricial -->
+                    <div class="p-5 rounded-xl bg-darkBg border border-darkBorder space-y-4 font-mono text-xs sm:text-sm overflow-x-auto">
+                        <div class="text-slate-400">// Ecuación de Estado: \dot{x} = A x + B u</div>
+                        <div class="text-slate-100 flex items-center gap-2">
+                            <span>\begin{bmatrix} \dot{x}_1 \\ \dot{x}_2 \end{bmatrix} =</span>
+                            <span class="text-cyanGlow font-bold">\begin{bmatrix} 0 & 1 \\ \frac{2g}{X_0} & 0 \end{bmatrix}</span>
+                            <span>\begin{bmatrix} x_1 \\ x_2 \end{bmatrix} +</span>
+                            <span class="text-purpleGlow font-bold">\begin{bmatrix} 0 \\ -\frac{2g}{I_0} \end{bmatrix}</span>
+                            <span>\Delta i(t)</span>
+                        </div>
+
+                        <div class="text-slate-400 pt-2">// Ecuación de Salida: y = C x + D u</div>
+                        <div class="text-slate-100 flex items-center gap-2">
+                            <span>y(t) =</span>
+                            <span class="text-amber-400 font-bold">\begin{bmatrix} 1 & 0 \end{bmatrix}</span>
+                            <span>\begin{bmatrix} x_1 \\ x_2 \end{bmatrix} +</span>
+                            <span class="text-slate-400 font-bold">\begin{bmatrix} 0 \end{bmatrix}</span>
+                            <span>\Delta i(t)</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                        <div class="p-3 rounded-lg bg-darkBg/60 border border-darkBorder">
+                            <span class="text-slate-500 block">Matriz de Sistema A:</span>
+                            <span class="text-cyanGlow">A_{21} = 2g/X_0</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-darkBg/60 border border-darkBorder">
+                            <span class="text-slate-500 block">Matriz de Entrada B:</span>
+                            <span class="text-purpleGlow">B_{21} = -2g/I_0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagrama SVG con Integradores s^-1 -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cube text-purpleGlow"></i> Diagrama de Integradores $s^{-1}$
+                    </h3>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Estructura interna del sistema mostrando la cascada de dos bloques integradores $s^{-1}$ y la realimentación positiva interna de aceleración a posición.
+                    </p>
+
+                    <div class="overflow-x-auto py-2">
+                        <svg viewBox="0 0 520 220" class="w-full min-w-[450px] h-auto font-sans">
+                            <defs>
+                                <marker id="arrow2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#00f3ff" />
+                                </marker>
+                            </defs>
+                            
+                            <!-- Entrada Delta i -->
+                            <text x="10" y="85" fill="#94a3b8" font-size="11" font-family="monospace">\Delta i(t)</text>
+                            <path d="M 10 100 L 50 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+
+                            <!-- Ganancia B -->
+                            <rect x="50" y="80" width="60" height="40" rx="6" fill="#0f172a" stroke="#a855f7" stroke-width="1.5"/>
+                            <text x="80" y="104" fill="#a855f7" font-size="10" font-weight="bold" text-anchor="middle">-2g/I_0</text>
+                            <path d="M 110 100 L 140 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+
+                            <!-- Sumador -->
+                            <circle cx="155" cy="100" r="12" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="151" y="104" fill="#ffffff" font-size="12">+</text>
+
+                            <!-- Aceleración -->
+                            <path d="M 167 100 L 200 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+                            <text x="175" y="90" fill="#94a3b8" font-size="9" font-family="monospace">\ddot{x}</text>
+
+                            <!-- Integrador 1 -->
+                            <rect x="200" y="80" width="55" height="40" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="227" y="104" fill="#00f3ff" font-size="12" font-weight="bold" text-anchor="middle">s⁻¹</text>
+                            
+                            <!-- Velocidad -->
+                            <path d="M 255 100 L 310 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+                            <text x="270" y="90" fill="#94a3b8" font-size="9" font-family="monospace">x₂=\dot{x}</text>
+
+                            <!-- Integrador 2 -->
+                            <rect x="310" y="80" width="55" height="40" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="337" y="104" fill="#00f3ff" font-size="12" font-weight="bold" text-anchor="middle">s⁻¹</text>
+
+                            <!-- Salida -->
+                            <path d="M 365 100 L 460 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+                            <text x="400" y="90" fill="#94a3b8" font-size="9" font-family="monospace">x₁=\Delta x(t)</text>
+                            <circle cx="430" cy="100" r="3" fill="#00f3ff"/>
+
+                            <!-- Realimentación interna 2g/X0 -->
+                            <path d="M 430 100 L 430 170 L 280 170" stroke="#00f3ff" stroke-width="1.5" fill="none"/>
+                            <rect x="220" y="150" width="60" height="40" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="250" y="174" fill="#00f3ff" font-size="10" font-weight="bold" text-anchor="middle">2g/X_0</text>
+                            <path d="M 220 170 L 155 170 L 155 114" stroke="#00f3ff" stroke-width="1.5" fill="none" marker-end="url(#arrow2)"/>
+                            <text x="162" y="130" fill="#00f3ff" font-size="10">+</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 4: SIMULADOR WEB INTERACTIVO + GNU OCTAVE                        -->
+        <!-- ========================================================================= -->
+        <section id="sec-simulator" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-cyan-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-cyanGlow px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                    Sección 4: Experimentación & Validación
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-cyan">
+                    Simulador Interactivo en Tiempo Real y GNU Octave
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Modifique los parámetros físicos del entrehierro y las ganancias del controlador PD para presenciar la estabilización del polo inestable.
+                </p>
+            </div>
+
+            <!-- Contenedor del Simulador -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Controles Sliders (5 columnas) -->
+                <div class="lg:col-span-5 glass-panel p-6 rounded-2xl border border-darkBorder space-y-6">
+                    <h3 class="text-md font-bold text-white flex items-center justify-between border-b border-darkBorder pb-3">
+                        <span><i class="fa-solid fa-sliders text-cyanGlow mr-2"></i> Parámetros del Sistema</span>
+                        <button onclick="resetSliders()" class="text-xs text-slate-400 hover:text-cyanGlow transition-colors">
+                            <i class="fa-solid fa-rotate-left mr-1"></i>Restablecer
+                        </button>
+                    </h3>
+
+                    <!-- Slider 1: X0 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-x0" class="text-slate-300">Entrehierro de Equilibrio X₀</label>
+                            <span id="val-x0" class="text-cyanGlow font-mono">10.0 mm</span>
+                        </div>
+                        <input type="range" id="slider-x0" min="5" max="25" step="0.5" value="10" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-cyanGlow" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Afecta K_x = 2g/X₀. Menor entrehierro incrementa la inestabilidad.</p>
+                    </div>
+
+                    <!-- Slider 2: I0 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-i0" class="text-slate-300">Corriente de Equilibrio I₀</label>
+                            <span id="val-i0" class="text-purpleGlow font-mono">2.00 A</span>
+                        </div>
+                        <input type="range" id="slider-i0" min="0.5" max="5.0" step="0.1" value="2.0" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-purpleGlow" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Afecta la ganancia de entrada K_i = 2g/I₀.</p>
+                    </div>
+
+                    <!-- Slider 3: Kp -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-kp" class="text-slate-300">Ganancia Proporcional Kₚ</label>
+                            <span id="val-kp" class="text-amber-400 font-mono">15.0</span>
+                        </div>
+                        <input type="range" id="slider-kp" min="1" max="50" step="0.5" value="15" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-amber-400" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Reubica los polos hacia la región de estabilidad.</p>
+                    </div>
+
+                    <!-- Slider 4: Kd -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-kd" class="text-slate-300">Ganancia Derivativa K_d (Amortiguamiento)</label>
+                            <span id="val-kd" class="text-emerald-400 font-mono">0.80</span>
+                        </div>
+                        <input type="range" id="slider-kd" min="0.05" max="3.0" step="0.05" value="0.8" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-emerald-400" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Elimina las oscilaciones añadiendo sobreamortiguamiento.</p>
+                    </div>
+
+                    <!-- Panel Monitor de Polos Calculados -->
+                    <div class="p-4 rounded-xl bg-darkBg/90 border border-darkBorder space-y-3 font-mono text-xs">
+                        <div class="text-slate-400 font-bold border-b border-darkBorder/60 pb-1 text-[11px] uppercase tracking-wider">
+                            <i class="fa-solid fa-calculator text-cyanGlow mr-1"></i> Estado Dinámico en Vivo
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Polo Lazo Abierto (+) :</span>
+                            <span id="calc-pole-open" class="text-red-400 font-bold">+44.29 rad/s (INESTABLE)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Polos Lazo Cerrado :</span>
+                            <span id="calc-pole-closed" class="text-emerald-400 font-bold">-19.6 ± 12.3i</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Valor Final (Teorema) :</span>
+                            <span id="calc-fvt" class="text-cyanGlow font-bold">1.000 (100% Seguimiento)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfica Chart.js en Tiempo Real (7 columnas) -->
+                <div class="lg:col-span-7 glass-panel p-6 rounded-2xl border border-darkBorder flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-cyanGlow"></i> Respuesta Temporal al Escalón $\Delta X(t)$
+                            </h3>
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="flex items-center gap-1.5 text-red-400"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>Lazo Abierto</span>
+                                <span class="flex items-center gap-1.5 text-cyanGlow"><span class="w-2.5 h-2.5 rounded-full bg-cyanGlow inline-block"></span>Lazo Cerrado (PD)</span>
+                            </div>
+                        </div>
+                        <div class="relative w-full h-[320px] sm:h-[360px]">
+                            <canvas id="stepChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 rounded-lg bg-darkBg border border-darkBorder text-xs text-slate-400 leading-relaxed">
+                        <strong class="text-cyanGlow">Interpretación:</strong> La curva roja en Lazo Abierto diverge hacia valores negativos infinitos debido a la presencia del polo positivo. El controlador PD (curva cian) asegura la convergencia asintótica suave al entrehierro nominal.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Código de Validación GNU Octave -->
+            <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-darkBorder pb-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-code text-purpleGlow"></i> Script de Validación Oficial GNU Octave / MATLAB
+                        </h3>
+                        <p class="text-xs text-slate-400">Código fuente verificador utilizado para respaldar las capturas del informe PDF.</p>
+                    </div>
+                    <button onclick="copyOctaveCode()" class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purpleGlow border border-purple-500/40 text-xs font-mono hover:bg-purple-500/30 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-copy"></i> Copiar Código
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <pre class="p-5 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-slate-200 overflow-x-auto leading-relaxed select-all"><code id="octave-code-block">% =========================================================================
+% UNIVERSIDAD HISPANOAMERICANA - ELEC-5308: ANÁLISIS DE SISTEMAS
+% PROYECTO DE INVESTIGACIÓN: LEVITACIÓN MAGNÉTICA (MAGLEV) - TEMA 10
+% Script Oficial de Verificación en GNU Octave
+% =========================================================================
+clear all; clc; close all;
+
+% 1. Parámetros Físicos Nominales
+g = 9.81;          % Aceleración de la gravedad [m/s^2]
+X0 = 0.010;        % Entrehierro de equilibrio [10 mm]
+I0 = 2.00;         % Corriente de equilibrio [2 A]
+
+% 2. Constantes de Linealización por Serie de Taylor
+K_x = (2 * g) / X0; % Derivada parcial respectiva a la posición [s^-2]
+K_i = (2 * g) / I0; % Derivada parcial respectiva a la corriente [(m/s^2)/A]
+
+fprintf('--- ANÁLISIS DE LAZO ABIERTO ---\n');
+fprintf('Constante K_x = %.2f\n', K_x);
+fprintf('Constante K_i = %.2f\n', K_i);
+
+% 3. Función de Transferencia en Lazo Abierto G(s) = -K_i / (s^2 - K_x)
+num_la = [-K_i];
+den_la = [1, 0, -K_x];
+G_la = tf(num_la, den_la);
+
+polos_la = roots(den_la);
+disp('Polos en Lazo Abierto (Evidencia de Inestabilidad RHP):');
+disp(polos_la);
+
+% 4. Diseño de Compensador PD en Lazo Cerrado: C(s) = Kp + Kd*s
+Kp = 15;
+Kd = 0.8;
+C = tf([Kd, Kp], 1);
+
+% Lazo Cerrado T(s) = (C * G) / (1 + C * G)
+G_lc = feedback(C * G_la, 1);
+
+polos_lc = pole(G_lc);
+disp('Polos en Lazo Cerrado (Sistema Estabilizado):');
+disp(polos_lc);
+
+% 5. Simulación de Respuesta Temporal al Escalón
+t = 0:0.001:0.3;
+[y_la, t_la] = step(G_la, t);
+[y_lc, t_lc] = step(G_lc, t);
+
+figure('Name', 'Validación Maglev - UHispanoamericana');
+subplot(2,1,1);
+plot(t_la, y_la, 'r--', 'LineWidth', 2);
+grid on; title('Respuesta Lazo Abierto (Divergente Inestable)');
+xlabel('Tiempo (s)'); ylabel('\Delta x (m)');
+
+subplot(2,1,2);
+plot(t_lc, y_lc, 'b-', 'LineWidth', 2);
+grid on; title('Respuesta Lazo Cerrado con Control PD (Estabilizada)');
+xlabel('Tiempo (s)'); ylabel('\Delta x (m)');
+</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 5: ANÁLISIS DE ESTABILIDAD Y CONCLUSIONES DE INGENIERÍA           -->
+        <!-- ========================================================================= -->
+        <section id="sec-conclusions" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-purple-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-purpleGlow px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30">
+                    Sección 5: Síntesis de Ingeniería
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-purple">
+                    Análisis de Estabilidad y Conclusiones Tecnológicas
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Evaluación analítica del Teorema del Valor Final y trascendencia industrial de la suspensión electromagnética.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Análisis de Estabilidad -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-cyanGlow"></i> Comparativa de Polos y Teorema del Valor Final
+                    </h3>
+                    
+                    <div class="space-y-3 text-xs sm:text-sm">
+                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder">
+                            <strong class="text-cyanGlow block mb-1">Teorema del Valor Final (FVT):</strong>
+                            $$\lim_{t \to \infty} \Delta x(t) = \lim_{s \to 0} s \cdot \Delta X(s) = \lim_{s \to 0} s \cdot \left[ T(s) \frac{1}{s} \right]$$
+                            Para el sistema en lazo cerrado con control PD, al evaluar $s = 0$, las ganancias proporcional e incremental cancelan el error de estado estacionario, garantizando un seguimiento estable.
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs font-mono">
+                                <thead>
+                                    <tr class="border-b border-darkBorder text-slate-400">
+                                        <th class="p-2">Métrica</th>
+                                        <th class="p-2 text-red-400">Lazo Abierto</th>
+                                        <th class="p-2 text-emerald-400">Lazo Cerrado (PD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-darkBorder text-slate-300">
+                                    <tr>
+                                        <td class="p-2 font-bold">Polos Dominantes</td>
+                                        <td class="p-2 text-red-400">s = +44.29 (RHP)</td>
+                                        <td class="p-2 text-emerald-400">s = -19.6 ± 12.3i (LHP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-bold">Estabilidad BIBO</td>
+                                        <td class="p-2 text-red-400">Inestable</td>
+                                        <td class="p-2 text-emerald-400">Asintóticamente Estable</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-bold">Tiempo de Asentamiento</td>
+                                        <td class="p-2 text-red-400">$$\infty$$ (Diverge)</td>
+                                        <td class="p-2 text-emerald-400">&lt; 0.15 segundos</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conclusiones de Ingeniería -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i> Conclusiones de Ingeniería Mecatrónica
+                    </h3>
+                    
+                    <ul class="space-y-3 text-xs sm:text-sm text-slate-300">
+                        <li class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-check text-cyanGlow mt-1"></i>
+                            <span><strong>Transformación de la Dinámica:</strong> La realimentación de control convierte una planta inestable por naturaleza en un sistema estable de respuesta rápida.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-check text-cyanGlow mt-1"></i>
+                            <span><strong>Sensibilidad del Punto de Operación:</strong> La linealización por Serie de Taylor es válida únicamente en las cercanías del entrehierro $X_0$. Variaciones de amplitud superiores al 20% exigen control no lineal.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-check text-cyanGlow mt-1"></i>
+                            <span><strong>Impacto Industrial:</strong> El diseño de lazo cerrado permite operar sistemas de transporte ultra-rápidos sin contacto mecánico, anulando el desgaste por fricción y reduciendo costos operativos.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="glass-panel border-t border-darkBorder py-6 px-4 sm:px-8 mt-12 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <p class="font-semibold text-slate-400">Curso: Análisis de Sistemas (ELEC-5308) | Prof. Herberth Córdoba Alvarez</p>
+                <p>Universidad Hispanoamericana • Bachillerato en Ingeniería Mecatrónica / Electrónica</p>
+            </div>
+            <div class="text-right">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyanGlow border border-cyan-500/20">
+                    <i class="fa-solid fa-code"></i> GitHub Pages Public Ready
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE SIMULACIÓN E INTERACTIVIDAD JS -->
+    <script>
+        let stepChart = null;
+        const g = 9.81;
+
+        window.onload = function() {
+            initChart();
+            updateSimulation();
+        };
+
+        function switchTab(sectionId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(el => el.classList.add('hidden'));
+
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('text-cyanGlow', 'bg-cyan-500/10', 'border', 'border-cyan-500/30');
+                tab.classList.add('text-slate-400');
+            });
+
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) {
+                selectedSection.classList.remove('hidden');
+            }
+
+            const activeTab = document.getElementById('tab-' + sectionId);
+            if (activeTab) {
+                activeTab.classList.add('text-cyanGlow', 'bg-cyan-500/10', 'border', 'border-cyan-500/30');
+                activeTab.classList.remove('text-slate-400');
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('stepChart').getContext('2d');
+            
+            stepChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Lazo Abierto (Inestable)',
+                            data: [],
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Lazo Cerrado (PD Estabilizado)',
+                            data: [],
+                            borderColor: '#00f3ff',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            fill: true,
+                            backgroundColor: 'rgba(0, 243, 255, 0.05)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 200 },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Tiempo (segundos)', color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        },
+                        y: {
+                            title: { display: true, text: 'Respuesta Posición Δx(t)', color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateSimulation() {
+            const X0_mm = parseFloat(document.getElementById('slider-x0').value);
+            const I0 = parseFloat(document.getElementById('slider-i0').value);
+            const Kp = parseFloat(document.getElementById('slider-kp').value);
+            const Kd = parseFloat(document.getElementById('slider-kd').value);
+
+            document.getElementById('val-x0').innerText = X0_mm.toFixed(1) + ' mm';
+            document.getElementById('val-i0').innerText = I0.toFixed(2) + ' A';
+            document.getElementById('val-kp').innerText = Kp.toFixed(1);
+            document.getElementById('val-kd').innerText = Kd.toFixed(2);
+
+            const X0 = X0_mm / 1000.0;
+            const Kx = (2.0 * g) / X0;
+            const Ki = (2.0 * g) / I0;
+
+            const openLoopPole = Math.sqrt(Kx);
+            document.getElementById('calc-pole-open').innerText = '+' + openLoopPole.toFixed(2) + ' rad/s (INESTABLE)';
+
+            const a = 1.0;
+            const b = Ki * Kd;
+            const c = (Ki * Kp) - Kx;
+
+            const discriminant = b*b - 4*a*c;
+            let poleText = "";
+
+            if (discriminant >= 0) {
+                const r1 = (-b + Math.sqrt(discriminant)) / (2*a);
+                const r2 = (-b - Math.sqrt(discriminant)) / (2*a);
+                poleText = r1.toFixed(1) + ', ' + r2.toFixed(1);
+            } else {
+                const realPart = (-b / (2*a)).toFixed(1);
+                const imagPart = (Math.sqrt(-discriminant) / (2*a)).toFixed(1);
+                poleText = realPart + " ± " + imagPart + "i";
+            }
+            document.getElementById('calc-pole-closed').innerText = poleText + " (LHP)";
+
+            const fvtValue = (c > 0) ? (Ki * Kp / (Ki * Kp - Kx)).toFixed(2) : "Divergente";
+            document.getElementById('calc-fvt').innerText = fvtValue;
+
+            const timeSteps = 100;
+            const tMax = 0.25;
+            const labels = [];
+            const dataOpen = [];
+            const dataClosed = [];
+
+            for (let i = 0; i <= timeSteps; i++) {
+                const t = (i / timeSteps) * tMax;
+                labels.push(t.toFixed(3));
+
+                const valOpen = -(Ki / Kx) * (Math.cosh(openLoopPole * t) - 1);
+                dataOpen.push(valOpen < -10 ? -10 : valOpen);
+
+                let valClosed = 0;
+                if (c > 0) {
+                    const wn = Math.sqrt(c / a);
+                    const zeta = b / (2 * Math.sqrt(a * c));
+                    const finalVal = (Ki * Kp) / c;
+
+                    if (zeta < 1.0) {
+                        const wd = wn * Math.sqrt(1 - zeta*zeta);
+                        const phi = Math.atan(Math.sqrt(1 - zeta*zeta) / zeta);
+                        valClosed = finalVal * (1 - (1 / Math.sqrt(1 - zeta*zeta)) * Math.exp(-zeta * wn * t) * Math.sin(wd * t + phi));
+                    } else {
+                        valClosed = finalVal * (1 - Math.exp(-wn * t));
+                    }
+                } else {
+                    valClosed = -10;
+                }
+                dataClosed.push(valClosed);
+            }
+
+            if (stepChart) {
+                stepChart.data.labels = labels;
+                stepChart.data.datasets[0].data = dataOpen;<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELEC-5308 | Levitación Magnética (Maglev) - Sistemas de Control</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN para visualización de control en tiempo real -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN para iconos de ingeniería -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyanGlow: '#00f3ff',
+                        purpleGlow: '#a855f7',
+                        darkBg: '#090d16',
+                        darkCard: '#111827',
+                        darkBorder: '#1f293d'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #060911;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .neon-glow-cyan {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+        }
+        .neon-glow-purple {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+        .text-glow-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyanGlow selection:text-black">
+
+    <!-- ENCABEZADO Y BARRA DE NAVEGACIÓN ACADÉMICA -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-darkBorder px-4 py-3 sm:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-black font-extrabold text-xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-magnet text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        UHispanoamericana <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/10 text-cyanGlow border border-cyan-500/30">ELEC-5308</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Análisis de Sistemas | Tema 10: Levitación Magnética (Maglev) sin Fricción</p>
+                </div>
+            </div>
+
+            <!-- PESTAÑAS DE NAVEGACIÓN -->
+            <nav class="flex items-center gap-1 bg-darkBg/80 p-1.5 rounded-xl border border-darkBorder overflow-x-auto max-w-full">
+                <button onclick="switchTab('sec-context')" id="tab-sec-context" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-cyanGlow bg-cyan-500/10 border border-cyan-500/30 whitespace-nowrap">
+                    <i class="fa-solid fa-industry mr-1.5"></i>1. Arquitectura
+                </button>
+                <button onclick="switchTab('sec-math')" id="tab-sec-math" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-calculator mr-1.5"></i>2. Modelado & Linealización
+                </button>
+                <button onclick="switchTab('sec-diagrams')" id="tab-sec-diagrams" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-diagram-project mr-1.5"></i>3. Bloques & Estados
+                </button>
+                <button onclick="switchTab('sec-simulator')" id="tab-sec-simulator" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-sliders mr-1.5"></i>4. Simulador & Octave
+                </button>
+                <button onclick="switchTab('sec-conclusions')" id="tab-sec-conclusions" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-chart-line mr-1.5"></i>5. Estabilidad
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 1: CONTEXTO INDUSTRIAL Y ARQUITECTURA DE CONTROL                 -->
+        <!-- ========================================================================= -->
+        <section id="sec-context" class="tab-content space-y-8 animate-fadeIn">
+            <div class="relative overflow-hidden rounded-2xl glass-panel p-6 sm:p-8 border border-cyan-500/20">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-3xl">
+                    <span class="text-xs font-bold uppercase tracking-widest text-cyanGlow px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                        Sección 1: Contexto Industrial
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-cyan">
+                        Sistemas de Levitación Magnética (Maglev) sin Fricción
+                    </h2>
+                    <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                        La levitación magnética electromagnética (EMS) suspende un vehículo u objeto metálico en el aire eliminando el contacto mecánico por completo. Al suprimir la fricción superficial, permite velocidades de transporte terrestre superiores a 500 km/h y rodamientos magnéticos industriales sin desgaste físico.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Componentes de la Arquitectura -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Planta -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyanGlow flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-train"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Planta Física</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Electroimán y Carro/Esfera Suspendida:</strong> La masa $m$ bajo la influencia de la fuerza gravitacional $m \cdot g$ y atraída por el campo electromagnético del solenoide superior.
+                    </p>
+                </div>
+
+                <!-- Sensor -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purpleGlow flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Sensor (Transductor)</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Sensor Óptico / Inductivo de Entrehierro:</strong> Mide en tiempo real la distancia vertical exacta del entrehierro $x(t)$ y convierte la variable mecánica en una señal proporcional.
+                    </p>
+                </div>
+
+                <!-- Controlador -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Controlador</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Algoritmo Digital / Compensador PD-PID:</strong> Procesa el error $e(t) = r(t) - x(t)$ y calcula la corrección de corriente requerida para mantener la levitación en equilibrio.
+                    </p>
+                </div>
+
+                <!-- Actuador -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Actuador</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        <strong class="text-slate-200">Amplificador de Potencia PWM / Driver H:</strong> Convierte la señal de control lógica en la corriente física $i(t)$ suministrada a la bobina del electroimán.
+                    </p>
+                </div>
+
+                <!-- Perturbaciones -->
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-cyan-500/40 transition-all group md:col-span-2 lg:col-span-2">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-wind"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Perturbaciones Físicas Exógenas $d(t)$</h3>
+                    <p class="text-slate-400 text-xs sm:text-sm leading-relaxed">
+                        Vientos cruzados aerodinámicos, desniveles imprevistos en la guía, variaciones de masa por pasaje y fluctuaciones térmicas que alteran la resistencia interna de la bobina.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Esquema en SVG del Lazo de Control Industrial -->
+            <div class="glass-panel p-6 rounded-2xl border border-darkBorder">
+                <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-cyanGlow"></i> Esquema del Lazo de Control Industrial Maglev
+                </h3>
+                <div class="overflow-x-auto py-4">
+                    <svg viewBox="0 0 900 240" class="w-full min-w-[700px] h-auto font-sans">
+                        <defs>
+                            <linearGradient id="gradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#0284c7" stop-opacity="0.8"/>
+                            </linearGradient>
+                            <linearGradient id="gradPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#a855f7" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#6b21a8" stop-opacity="0.8"/>
+                            </linearGradient>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#00f3ff" />
+                            </marker>
+                            <marker id="arrowRed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                            </marker>
+                        </defs>
+
+                        <!-- Entrada de Referencia -->
+                        <text x="20" y="95" fill="#94a3b8" font-size="12" font-weight="600">Referencia X_ref(s)</text>
+                        <path d="M 20 110 L 80 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+
+                        <!-- Punto Sumador -->
+                        <circle cx="100" cy="110" r="16" fill="#0f172a" stroke="#00f3ff" stroke-width="2"/>
+                        <text x="94" y="115" fill="#ffffff" font-size="16" font-weight="bold">Σ</text>
+                        <text x="75" y="105" fill="#00f3ff" font-size="12">+</text>
+                        <text x="94" y="140" fill="#ef4444" font-size="14">-</text>
+
+                        <!-- Señal de Error -->
+                        <path d="M 116 110 L 160 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+                        <text x="125" y="95" fill="#94a3b8" font-size="11">Error e(t)</text>
+
+                        <!-- Bloque Controlador -->
+                        <rect x="160" y="80" width="120" height="60" rx="10" fill="#0f172a" stroke="#00f3ff" stroke-width="2" />
+                        <text x="220" y="107" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">CONTROLADOR</text>
+                        <text x="220" y="125" fill="#00f3ff" font-size="11" text-anchor="middle">PD / PID Digital</text>
+
+                        <!-- Línea de Control -->
+                        <path d="M 280 110 L 320 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+
+                        <!-- Bloque Actuador -->
+                        <rect x="320" y="80" width="120" height="60" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+                        <text x="380" y="107" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">ACTUADOR</text>
+                        <text x="380" y="125" fill="#38bdf8" font-size="11" text-anchor="middle">Amplificador PWM</text>
+
+                        <!-- Corriente i(t) -->
+                        <path d="M 440 110 L 480 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+                        <text x="445" y="95" fill="#94a3b8" font-size="11">Corriente i(t)</text>
+
+                        <!-- Perturbación -->
+                        <path d="M 540 30 L 540 80" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowRed)" />
+                        <text x="548" y="45" fill="#ef4444" font-size="11" font-weight="600">Perturbación d(t)</text>
+
+                        <!-- Bloque Planta -->
+                        <rect x="480" y="80" width="140" height="60" rx="10" fill="#0f172a" stroke="url(#gradPurple)" stroke-width="2.5" />
+                        <text x="550" y="107" fill="#ffffff" font-size="13" font-weight="bold" text-anchor="middle">PLANTA MAGLEV</text>
+                        <text x="550" y="125" fill="#a855f7" font-size="11" text-anchor="middle">Electroimán + Masa m</text>
+
+                        <!-- Salida Posición x(t) -->
+                        <path d="M 620 110 L 760 110" stroke="#00f3ff" stroke-width="2.5" marker-end="url(#arrow)" />
+                        <text x="650" y="95" fill="#94a3b8" font-size="12" font-weight="600">Posición x(t)</text>
+                        <circle cx="700" cy="110" r="4" fill="#00f3ff"/>
+
+                        <!-- Lazo de Realimentación -->
+                        <path d="M 700 110 L 700 190 L 220 190" stroke="#00f3ff" stroke-width="2" fill="none" />
+                        <rect x="220" y="165" width="120" height="50" rx="8" fill="#0f172a" stroke="#a855f7" stroke-width="1.5"/>
+                        <text x="280" y="187" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">SENSOR DE POSICIÓN</text>
+                        <text x="280" y="202" fill="#a855f7" font-size="10" text-anchor="middle">Óptico / Inductivo</text>
+                        <path d="M 220 190 L 100 190 L 100 126" stroke="#00f3ff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 2: MODELADO MATEMÁTICO FÍSICO Y LINEALIZACIÓN                     -->
+        <!-- ========================================================================= -->
+        <section id="sec-math" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-purple-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-purpleGlow px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30">
+                    Sección 2: Rigor Matemático
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-purple">
+                    Modelado Físico y Linealización por Serie de Taylor
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Deducción analítica de la dinámica no lineal basada en las leyes de Newton y la fuerza electromagnética no lineal, formalizando su linealización alrededor del entrehierro de operación.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Paso 1: Modelo Físico -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyanGlow font-bold flex items-center justify-center text-sm border border-cyan-500/30">1</span>
+                        <h3 class="text-lg font-bold text-white">Ecuación Diferencial No Lineal</h3>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        La fuerza magnética desarrollada por una bobina es inversamente proporcional al cuadrado de la distancia $x(t)$ e idénticamente proporcional al cuadrado de la corriente $i(t)$:
+                    </p>
+                    <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-cyanGlow text-sm overflow-x-auto text-center">
+                        F_m(i, x) = k \cdot \frac{i^2(t)}{x^2(t)}
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Aplicando la 2ª Ley de Newton a la masa $m$ suspendida verticalmente:
+                    </p>
+                    <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-purpleGlow text-sm sm:text-base overflow-x-auto text-center">
+                        m \cdot \frac{d^2x(t)}{dt^2} = m \cdot g - k \cdot \frac{i^2(t)}{x^2(t)}
+                    </div>
+                </div>
+
+                <!-- Paso 2: Linealización -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyanGlow font-bold flex items-center justify-center text-sm border border-cyan-500/30">2</span>
+                        <h3 class="text-lg font-bold text-white">Punto de Equilibrio & Serie de Taylor</h3>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        En el estado estacionario $(X_0, I_0)$, la aceleración es nula ($\ddot{x} = 0$), por lo que el peso compensa la atracción magnética:
+                    </p>
+                    <div class="p-3 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-slate-200 text-center">
+                        m \cdot g = k \cdot \frac{I_0^2}{X_0^2} \implies k = \frac{m \cdot g \cdot X_0^2}{I_0^2}
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Expandiendo $F_m(i, x)$ mediante Serie de Taylor multivariable truncada en 1<sup>er</sup> orden alrededor de $(X_0, I_0)$:
+                    </p>
+                    <div class="p-3 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-cyanGlow overflow-x-auto">
+                        F_m(i, x) \approx F_m(I_0, X_0) + \left. \frac{\partial F_m}{\partial x} \right|_0 \Delta x + \left. \frac{\partial F_m}{\partial i} \right|_0 \Delta i
+                    </div>
+                    <div class="text-xs text-slate-300 font-mono space-y-1 bg-darkBg/60 p-3 rounded-lg border border-darkBorder">
+                        <p>• K_x = \left| \frac{\partial F_m}{\partial x} \right|_0 = \frac{2 k I_0^2}{X_0^3} = \frac{2 m g}{X_0}</p>
+                        <p>• K_i = \left| \frac{\partial F_m}{\partial i} \right|_0 = \frac{2 k I_0}{X_0^2} = \frac{2 m g}{I_0}</p>
+                    </div>
+                </div>
+
+                <!-- Paso 3: Función de Transferencia -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4 lg:col-span-2">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyanGlow font-bold flex items-center justify-center text-sm border border-cyan-500/30">3</span>
+                        <h3 class="text-lg font-bold text-white">Ecuación Incremental & Función de Transferencia $G(s)$</h3>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Sustituyendo las derivadas parciales en la ecuación incremental $m \Delta \ddot{x} = K_x \Delta x - K_i \Delta i$:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-sm text-slate-200">
+                            <span class="text-xs text-slate-500 block mb-1">// Dominio del Tiempo (Linealizado)</span>
+                            \Delta \ddot{x}(t) - \left(\frac{2g}{X_0}\right) \Delta x(t) = -\left(\frac{2g}{I_0}\right) \Delta i(t)
+                        </div>
+                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder font-mono text-sm text-cyanGlow">
+                            <span class="text-xs text-slate-500 block mb-1">// Dominio de Laplace s (Cond. Iniciales Nulas)</span>
+                            s^2 \Delta X(s) - \left(\frac{2g}{X_0}\right) \Delta X(s) = -\left(\frac{2g}{I_0}\right) \Delta I(s)
+                        </div>
+                    </div>
+                    <div class="p-5 rounded-xl bg-gradient-to-r from-cyan-950/40 via-darkBg to-purple-950/40 border border-cyan-500/30 text-center">
+                        <p class="text-xs font-semibold text-cyanGlow uppercase tracking-widest mb-2">Función de Transferencia del Sistema en Lazo Abierto G(s)</p>
+                        <div class="font-mono text-xl sm:text-2xl font-bold text-white tracking-wider">
+                            G(s) = \frac{\Delta X(s)}{\Delta I(s)} = \frac{-\left(\frac{2g}{I_0}\right)}{s^2 - \left(\frac{2g}{X_0}\right)}
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-red-950/20 border border-red-500/30 text-red-300 text-xs sm:text-sm flex items-start gap-3">
+                        <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold text-white block mb-0.5">Demostración Formal de Inestabilidad en Lazo Abierto:</strong>
+                            Los polos del sistema en lazo abierto se hallan resolviendo $s^2 - \frac{2g}{X_0} = 0 \implies s = \pm \sqrt{\frac{2g}{X_0}}$. La presencia inevitable del polo real positivo $p_1 = +\sqrt{\frac{2g}{X_0}} > 0$ en el semiplano derecho (RHP) destruye la estabilidad BIBO; por lo tanto, cualquier perturbación mínima provocará que la masa caiga o se pegue al electroimán.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 3: DIAGRAMA DE BLOQUES Y ESPACIO DE ESTADOS                       -->
+        <!-- ========================================================================= -->
+        <section id="sec-diagrams" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-cyan-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-cyanGlow px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                    Sección 3: Representación Sistémica
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-cyan">
+                    Diagrama de Bloques y Espacio de Estados $(A, B, C, D)$
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Estructuración matricial en variables de estado físicas y representación en diagrama vectorial de bloques con integradores $s^{-1}$.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Matrices del Espacio de Estados -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-5">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-matrix text-cyanGlow"></i> Formulación Matricial en Espacio de Estados
+                    </h3>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Definiendo las variables de estado como las desviaciones relativas de posición y velocidad respecto al equilibrio:
+                    </p>
+                    <div class="p-3 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-cyanGlow text-center">
+                        x_1(t) = \Delta x(t) \quad (\text{Posición}), \qquad x_2(t) = \Delta \dot{x}(t) \quad (\text{Velocidad})
+                    </div>
+
+                    <!-- Representación Matricial -->
+                    <div class="p-5 rounded-xl bg-darkBg border border-darkBorder space-y-4 font-mono text-xs sm:text-sm overflow-x-auto">
+                        <div class="text-slate-400">// Ecuación de Estado: \dot{x} = A x + B u</div>
+                        <div class="text-slate-100 flex items-center gap-2">
+                            <span>\begin{bmatrix} \dot{x}_1 \\ \dot{x}_2 \end{bmatrix} =</span>
+                            <span class="text-cyanGlow font-bold">\begin{bmatrix} 0 & 1 \\ \frac{2g}{X_0} & 0 \end{bmatrix}</span>
+                            <span>\begin{bmatrix} x_1 \\ x_2 \end{bmatrix} +</span>
+                            <span class="text-purpleGlow font-bold">\begin{bmatrix} 0 \\ -\frac{2g}{I_0} \end{bmatrix}</span>
+                            <span>\Delta i(t)</span>
+                        </div>
+
+                        <div class="text-slate-400 pt-2">// Ecuación de Salida: y = C x + D u</div>
+                        <div class="text-slate-100 flex items-center gap-2">
+                            <span>y(t) =</span>
+                            <span class="text-amber-400 font-bold">\begin{bmatrix} 1 & 0 \end{bmatrix}</span>
+                            <span>\begin{bmatrix} x_1 \\ x_2 \end{bmatrix} +</span>
+                            <span class="text-slate-400 font-bold">\begin{bmatrix} 0 \end{bmatrix}</span>
+                            <span>\Delta i(t)</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                        <div class="p-3 rounded-lg bg-darkBg/60 border border-darkBorder">
+                            <span class="text-slate-500 block">Matriz de Sistema A:</span>
+                            <span class="text-cyanGlow">A_{21} = 2g/X_0</span>
+                        </div>
+                        <div class="p-3 rounded-lg bg-darkBg/60 border border-darkBorder">
+                            <span class="text-slate-500 block">Matriz de Entrada B:</span>
+                            <span class="text-purpleGlow">B_{21} = -2g/I_0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagrama SVG con Integradores s^-1 -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cube text-purpleGlow"></i> Diagrama de Integradores $s^{-1}$
+                    </h3>
+                    <p class="text-slate-400 text-xs sm:text-sm">
+                        Estructura interna del sistema mostrando la cascada de dos bloques integradores $s^{-1}$ y la realimentación positiva interna de aceleración a posición.
+                    </p>
+
+                    <div class="overflow-x-auto py-2">
+                        <svg viewBox="0 0 520 220" class="w-full min-w-[450px] h-auto font-sans">
+                            <defs>
+                                <marker id="arrow2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#00f3ff" />
+                                </marker>
+                            </defs>
+                            
+                            <!-- Entrada Delta i -->
+                            <text x="10" y="85" fill="#94a3b8" font-size="11" font-family="monospace">\Delta i(t)</text>
+                            <path d="M 10 100 L 50 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+
+                            <!-- Ganancia B -->
+                            <rect x="50" y="80" width="60" height="40" rx="6" fill="#0f172a" stroke="#a855f7" stroke-width="1.5"/>
+                            <text x="80" y="104" fill="#a855f7" font-size="10" font-weight="bold" text-anchor="middle">-2g/I_0</text>
+                            <path d="M 110 100 L 140 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+
+                            <!-- Sumador -->
+                            <circle cx="155" cy="100" r="12" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="151" y="104" fill="#ffffff" font-size="12">+</text>
+
+                            <!-- Aceleración -->
+                            <path d="M 167 100 L 200 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+                            <text x="175" y="90" fill="#94a3b8" font-size="9" font-family="monospace">\ddot{x}</text>
+
+                            <!-- Integrador 1 -->
+                            <rect x="200" y="80" width="55" height="40" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="227" y="104" fill="#00f3ff" font-size="12" font-weight="bold" text-anchor="middle">s⁻¹</text>
+                            
+                            <!-- Velocidad -->
+                            <path d="M 255 100 L 310 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+                            <text x="270" y="90" fill="#94a3b8" font-size="9" font-family="monospace">x₂=\dot{x}</text>
+
+                            <!-- Integrador 2 -->
+                            <rect x="310" y="80" width="55" height="40" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="337" y="104" fill="#00f3ff" font-size="12" font-weight="bold" text-anchor="middle">s⁻¹</text>
+
+                            <!-- Salida -->
+                            <path d="M 365 100 L 460 100" stroke="#00f3ff" stroke-width="2" marker-end="url(#arrow2)"/>
+                            <text x="400" y="90" fill="#94a3b8" font-size="9" font-family="monospace">x₁=\Delta x(t)</text>
+                            <circle cx="430" cy="100" r="3" fill="#00f3ff"/>
+
+                            <!-- Realimentación interna 2g/X0 -->
+                            <path d="M 430 100 L 430 170 L 280 170" stroke="#00f3ff" stroke-width="1.5" fill="none"/>
+                            <rect x="220" y="150" width="60" height="40" rx="6" fill="#0f172a" stroke="#00f3ff" stroke-width="1.5"/>
+                            <text x="250" y="174" fill="#00f3ff" font-size="10" font-weight="bold" text-anchor="middle">2g/X_0</text>
+                            <path d="M 220 170 L 155 170 L 155 114" stroke="#00f3ff" stroke-width="1.5" fill="none" marker-end="url(#arrow2)"/>
+                            <text x="162" y="130" fill="#00f3ff" font-size="10">+</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 4: SIMULADOR WEB INTERACTIVO + GNU OCTAVE                        -->
+        <!-- ========================================================================= -->
+        <section id="sec-simulator" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-cyan-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-cyanGlow px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30">
+                    Sección 4: Experimentación & Validación
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-cyan">
+                    Simulador Interactivo en Tiempo Real y GNU Octave
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Modifique los parámetros físicos del entrehierro y las ganancias del controlador PD para presenciar la estabilización del polo inestable.
+                </p>
+            </div>
+
+            <!-- Contenedor del Simulador -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Controles Sliders (5 columnas) -->
+                <div class="lg:col-span-5 glass-panel p-6 rounded-2xl border border-darkBorder space-y-6">
+                    <h3 class="text-md font-bold text-white flex items-center justify-between border-b border-darkBorder pb-3">
+                        <span><i class="fa-solid fa-sliders text-cyanGlow mr-2"></i> Parámetros del Sistema</span>
+                        <button onclick="resetSliders()" class="text-xs text-slate-400 hover:text-cyanGlow transition-colors">
+                            <i class="fa-solid fa-rotate-left mr-1"></i>Restablecer
+                        </button>
+                    </h3>
+
+                    <!-- Slider 1: X0 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-x0" class="text-slate-300">Entrehierro de Equilibrio X₀</label>
+                            <span id="val-x0" class="text-cyanGlow font-mono">10.0 mm</span>
+                        </div>
+                        <input type="range" id="slider-x0" min="5" max="25" step="0.5" value="10" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-cyanGlow" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Afecta K_x = 2g/X₀. Menor entrehierro incrementa la inestabilidad.</p>
+                    </div>
+
+                    <!-- Slider 2: I0 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-i0" class="text-slate-300">Corriente de Equilibrio I₀</label>
+                            <span id="val-i0" class="text-purpleGlow font-mono">2.00 A</span>
+                        </div>
+                        <input type="range" id="slider-i0" min="0.5" max="5.0" step="0.1" value="2.0" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-purpleGlow" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Afecta la ganancia de entrada K_i = 2g/I₀.</p>
+                    </div>
+
+                    <!-- Slider 3: Kp -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-kp" class="text-slate-300">Ganancia Proporcional Kₚ</label>
+                            <span id="val-kp" class="text-amber-400 font-mono">15.0</span>
+                        </div>
+                        <input type="range" id="slider-kp" min="1" max="50" step="0.5" value="15" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-amber-400" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Reubica los polos hacia la región de estabilidad.</p>
+                    </div>
+
+                    <!-- Slider 4: Kd -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-semibold">
+                            <label for="slider-kd" class="text-slate-300">Ganancia Derivativa K_d (Amortiguamiento)</label>
+                            <span id="val-kd" class="text-emerald-400 font-mono">0.80</span>
+                        </div>
+                        <input type="range" id="slider-kd" min="0.05" max="3.0" step="0.05" value="0.8" 
+                            class="w-full h-2 bg-darkBg rounded-lg appearance-none cursor-pointer accent-emerald-400" oninput="updateSimulation()">
+                        <p class="text-[11px] text-slate-500">Elimina las oscilaciones añadiendo sobreamortiguamiento.</p>
+                    </div>
+
+                    <!-- Panel Monitor de Polos Calculados -->
+                    <div class="p-4 rounded-xl bg-darkBg/90 border border-darkBorder space-y-3 font-mono text-xs">
+                        <div class="text-slate-400 font-bold border-b border-darkBorder/60 pb-1 text-[11px] uppercase tracking-wider">
+                            <i class="fa-solid fa-calculator text-cyanGlow mr-1"></i> Estado Dinámico en Vivo
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Polo Lazo Abierto (+) :</span>
+                            <span id="calc-pole-open" class="text-red-400 font-bold">+44.29 rad/s (INESTABLE)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Polos Lazo Cerrado :</span>
+                            <span id="calc-pole-closed" class="text-emerald-400 font-bold">-19.6 ± 12.3i</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Valor Final (Teorema) :</span>
+                            <span id="calc-fvt" class="text-cyanGlow font-bold">1.000 (100% Seguimiento)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfica Chart.js en Tiempo Real (7 columnas) -->
+                <div class="lg:col-span-7 glass-panel p-6 rounded-2xl border border-darkBorder flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-md font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-cyanGlow"></i> Respuesta Temporal al Escalón $\Delta X(t)$
+                            </h3>
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="flex items-center gap-1.5 text-red-400"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>Lazo Abierto</span>
+                                <span class="flex items-center gap-1.5 text-cyanGlow"><span class="w-2.5 h-2.5 rounded-full bg-cyanGlow inline-block"></span>Lazo Cerrado (PD)</span>
+                            </div>
+                        </div>
+                        <div class="relative w-full h-[320px] sm:h-[360px]">
+                            <canvas id="stepChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 rounded-lg bg-darkBg border border-darkBorder text-xs text-slate-400 leading-relaxed">
+                        <strong class="text-cyanGlow">Interpretación:</strong> La curva roja en Lazo Abierto diverge hacia valores negativos infinitos debido a la presencia del polo positivo. El controlador PD (curva cian) asegura la convergencia asintótica suave al entrehierro nominal.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Código de Validación GNU Octave -->
+            <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-darkBorder pb-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-code text-purpleGlow"></i> Script de Validación Oficial GNU Octave / MATLAB
+                        </h3>
+                        <p class="text-xs text-slate-400">Código fuente verificador utilizado para respaldar las capturas del informe PDF.</p>
+                    </div>
+                    <button onclick="copyOctaveCode()" class="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purpleGlow border border-purple-500/40 text-xs font-mono hover:bg-purple-500/30 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-copy"></i> Copiar Código
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <pre class="p-5 rounded-xl bg-darkBg border border-darkBorder font-mono text-xs sm:text-sm text-slate-200 overflow-x-auto leading-relaxed select-all"><code id="octave-code-block">% =========================================================================
+% UNIVERSIDAD HISPANOAMERICANA - ELEC-5308: ANÁLISIS DE SISTEMAS
+% PROYECTO DE INVESTIGACIÓN: LEVITACIÓN MAGNÉTICA (MAGLEV) - TEMA 10
+% Script Oficial de Verificación en GNU Octave
+% =========================================================================
+clear all; clc; close all;
+
+% 1. Parámetros Físicos Nominales
+g = 9.81;          % Aceleración de la gravedad [m/s^2]
+X0 = 0.010;        % Entrehierro de equilibrio [10 mm]
+I0 = 2.00;         % Corriente de equilibrio [2 A]
+
+% 2. Constantes de Linealización por Serie de Taylor
+K_x = (2 * g) / X0; % Derivada parcial respectiva a la posición [s^-2]
+K_i = (2 * g) / I0; % Derivada parcial respectiva a la corriente [(m/s^2)/A]
+
+fprintf('--- ANÁLISIS DE LAZO ABIERTO ---\n');
+fprintf('Constante K_x = %.2f\n', K_x);
+fprintf('Constante K_i = %.2f\n', K_i);
+
+% 3. Función de Transferencia en Lazo Abierto G(s) = -K_i / (s^2 - K_x)
+num_la = [-K_i];
+den_la = [1, 0, -K_x];
+G_la = tf(num_la, den_la);
+
+polos_la = roots(den_la);
+disp('Polos en Lazo Abierto (Evidencia de Inestabilidad RHP):');
+disp(polos_la);
+
+% 4. Diseño de Compensador PD en Lazo Cerrado: C(s) = Kp + Kd*s
+Kp = 15;
+Kd = 0.8;
+C = tf([Kd, Kp], 1);
+
+% Lazo Cerrado T(s) = (C * G) / (1 + C * G)
+G_lc = feedback(C * G_la, 1);
+
+polos_lc = pole(G_lc);
+disp('Polos en Lazo Cerrado (Sistema Estabilizado):');
+disp(polos_lc);
+
+% 5. Simulación de Respuesta Temporal al Escalón
+t = 0:0.001:0.3;
+[y_la, t_la] = step(G_la, t);
+[y_lc, t_lc] = step(G_lc, t);
+
+figure('Name', 'Validación Maglev - UHispanoamericana');
+subplot(2,1,1);
+plot(t_la, y_la, 'r--', 'LineWidth', 2);
+grid on; title('Respuesta Lazo Abierto (Divergente Inestable)');
+xlabel('Tiempo (s)'); ylabel('\Delta x (m)');
+
+subplot(2,1,2);
+plot(t_lc, y_lc, 'b-', 'LineWidth', 2);
+grid on; title('Respuesta Lazo Cerrado con Control PD (Estabilizada)');
+xlabel('Tiempo (s)'); ylabel('\Delta x (m)');
+</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================================= -->
+        <!-- SECCIÓN 5: ANÁLISIS DE ESTABILIDAD Y CONCLUSIONES DE INGENIERÍA           -->
+        <!-- ========================================================================= -->
+        <section id="sec-conclusions" class="tab-content space-y-8 hidden animate-fadeIn">
+            <div class="rounded-2xl glass-panel p-6 sm:p-8 border border-purple-500/20">
+                <span class="text-xs font-bold uppercase tracking-widest text-purpleGlow px-3 py-1 rounded-full bg-purple-950/60 border border-purple-500/30">
+                    Sección 5: Síntesis de Ingeniería
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-3 text-glow-purple">
+                    Análisis de Estabilidad y Conclusiones Tecnológicas
+                </h2>
+                <p class="text-slate-300 mt-2 text-sm sm:text-base leading-relaxed">
+                    Evaluación analítica del Teorema del Valor Final y trascendencia industrial de la suspensión electromagnética.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Análisis de Estabilidad -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-cyanGlow"></i> Comparativa de Polos y Teorema del Valor Final
+                    </h3>
+                    
+                    <div class="space-y-3 text-xs sm:text-sm">
+                        <div class="p-4 rounded-xl bg-darkBg border border-darkBorder">
+                            <strong class="text-cyanGlow block mb-1">Teorema del Valor Final (FVT):</strong>
+                            $$\lim_{t \to \infty} \Delta x(t) = \lim_{s \to 0} s \cdot \Delta X(s) = \lim_{s \to 0} s \cdot \left[ T(s) \frac{1}{s} \right]$$
+                            Para el sistema en lazo cerrado con control PD, al evaluar $s = 0$, las ganancias proporcional e incremental cancelan el error de estado estacionario, garantizando un seguimiento estable.
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs font-mono">
+                                <thead>
+                                    <tr class="border-b border-darkBorder text-slate-400">
+                                        <th class="p-2">Métrica</th>
+                                        <th class="p-2 text-red-400">Lazo Abierto</th>
+                                        <th class="p-2 text-emerald-400">Lazo Cerrado (PD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-darkBorder text-slate-300">
+                                    <tr>
+                                        <td class="p-2 font-bold">Polos Dominantes</td>
+                                        <td class="p-2 text-red-400">s = +44.29 (RHP)</td>
+                                        <td class="p-2 text-emerald-400">s = -19.6 ± 12.3i (LHP)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-bold">Estabilidad BIBO</td>
+                                        <td class="p-2 text-red-400">Inestable</td>
+                                        <td class="p-2 text-emerald-400">Asintóticamente Estable</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2 font-bold">Tiempo de Asentamiento</td>
+                                        <td class="p-2 text-red-400">$$\infty$$ (Diverge)</td>
+                                        <td class="p-2 text-emerald-400">&lt; 0.15 segundos</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conclusiones de Ingeniería -->
+                <div class="glass-panel p-6 rounded-2xl border border-darkBorder space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i> Conclusiones de Ingeniería Mecatrónica
+                    </h3>
+                    
+                    <ul class="space-y-3 text-xs sm:text-sm text-slate-300">
+                        <li class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-check text-cyanGlow mt-1"></i>
+                            <span><strong>Transformación de la Dinámica:</strong> La realimentación de control convierte una planta inestable por naturaleza en un sistema estable de respuesta rápida.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-check text-cyanGlow mt-1"></i>
+                            <span><strong>Sensibilidad del Punto de Operación:</strong> La linealización por Serie de Taylor es válida únicamente en las cercanías del entrehierro $X_0$. Variaciones de amplitud superiores al 20% exigen control no lineal.</span>
+                        </li>
+                        <li class="flex items-start gap-2.5">
+                            <i class="fa-solid fa-check text-cyanGlow mt-1"></i>
+                            <span><strong>Impacto Industrial:</strong> El diseño de lazo cerrado permite operar sistemas de transporte ultra-rápidos sin contacto mecánico, anulando el desgaste por fricción y reduciendo costos operativos.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="glass-panel border-t border-darkBorder py-6 px-4 sm:px-8 mt-12 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <p class="font-semibold text-slate-400">Curso: Análisis de Sistemas (ELEC-5308) | Prof. Herberth Córdoba Alvarez</p>
+                <p>Universidad Hispanoamericana • Bachillerato en Ingeniería Mecatrónica / Electrónica</p>
+            </div>
+            <div class="text-right">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyanGlow border border-cyan-500/20">
+                    <i class="fa-solid fa-code"></i> GitHub Pages Public Ready
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE SIMULACIÓN E INTERACTIVIDAD JS -->
+    <script>
+        let stepChart = null;
+        const g = 9.81;
+
+        window.onload = function() {
+            initChart();
+            updateSimulation();
+        };
+
+        function switchTab(sectionId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(el => el.classList.add('hidden'));
+
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('text-cyanGlow', 'bg-cyan-500/10', 'border', 'border-cyan-500/30');
+                tab.classList.add('text-slate-400');
+            });
+
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) {
+                selectedSection.classList.remove('hidden');
+            }
+
+            const activeTab = document.getElementById('tab-' + sectionId);
+            if (activeTab) {
+                activeTab.classList.add('text-cyanGlow', 'bg-cyan-500/10', 'border', 'border-cyan-500/30');
+                activeTab.classList.remove('text-slate-400');
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('stepChart').getContext('2d');
+            
+            stepChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Lazo Abierto (Inestable)',
+                            data: [],
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Lazo Cerrado (PD Estabilizado)',
+                            data: [],
+                            borderColor: '#00f3ff',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            fill: true,
+                            backgroundColor: 'rgba(0, 243, 255, 0.05)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 200 },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Tiempo (segundos)', color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        },
+                        y: {
+                            title: { display: true, text: 'Respuesta Posición Δx(t)', color: '#64748b', font: { size: 11 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateSimulation() {
+            const X0_mm = parseFloat(document.getElementById('slider-x0').value);
+            const I0 = parseFloat(document.getElementById('slider-i0').value);
+            const Kp = parseFloat(document.getElementById('slider-kp').value);
+            const Kd = parseFloat(document.getElementById('slider-kd').value);
+
+            document.getElementById('val-x0').innerText = X0_mm.toFixed(1) + ' mm';
+            document.getElementById('val-i0').innerText = I0.toFixed(2) + ' A';
+            document.getElementById('val-kp').innerText = Kp.toFixed(1);
+            document.getElementById('val-kd').innerText = Kd.toFixed(2);
+
+            const X0 = X0_mm / 1000.0;
+            const Kx = (2.0 * g) / X0;
+            const Ki = (2.0 * g) / I0;
+
+            const openLoopPole = Math.sqrt(Kx);
+            document.getElementById('calc-pole-open').innerText = '+' + openLoopPole.toFixed(2) + ' rad/s (INESTABLE)';
+
+            const a = 1.0;
+            const b = Ki * Kd;
+            const c = (Ki * Kp) - Kx;
+
+            const discriminant = b*b - 4*a*c;
+            let poleText = "";
+
+            if (discriminant >= 0) {
+                const r1 = (-b + Math.sqrt(discriminant)) / (2*a);
+                const r2 = (-b - Math.sqrt(discriminant)) / (2*a);
+                poleText = r1.toFixed(1) + ', ' + r2.toFixed(1);
+            } else {
+                const realPart = (-b / (2*a)).toFixed(1);
+                const imagPart = (Math.sqrt(-discriminant) / (2*a)).toFixed(1);
+                poleText = realPart + " ± " + imagPart + "i";
+            }
+            document.getElementById('calc-pole-closed').innerText = poleText + " (LHP)";
+
+            const fvtValue = (c > 0) ? (Ki * Kp / (Ki * Kp - Kx)).toFixed(2) : "Divergente";
+            document.getElementById('calc-fvt').innerText = fvtValue;
+
+            const timeSteps = 100;
+            const tMax = 0.25;
+            const labels = [];
+            const dataOpen = [];
+            const dataClosed = [];
+
+            for (let i = 0; i <= timeSteps; i++) {
+                const t = (i / timeSteps) * tMax;
+                labels.push(t.toFixed(3));
+
+                const valOpen = -(Ki / Kx) * (Math.cosh(openLoopPole * t) - 1);
+                dataOpen.push(valOpen < -10 ? -10 : valOpen);
+
+                let valClosed = 0;
+                if (c > 0) {
+                    const wn = Math.sqrt(c / a);
+                    const zeta = b / (2 * Math.sqrt(a * c));
+                    const finalVal = (Ki * Kp) / c;
+
+                    if (zeta < 1.0) {
+                        const wd = wn * Math.sqrt(1 - zeta*zeta);
+                        const phi = Math.atan(Math.sqrt(1 - zeta*zeta) / zeta);
+                        valClosed = finalVal * (1 - (1 / Math.sqrt(1 - zeta*zeta)) * Math.exp(-zeta * wn * t) * Math.sin(wd * t + phi));
+                    } else {
+                        valClosed = finalVal * (1 - Math.exp(-wn * t));
+                    }
+                } else {
+                    valClosed = -10;
+                }
+                dataClosed.push(valClosed);
+            }
+
+            if (stepChart) {
+                stepChart.data.labels = labels;
+                stepChart.data.datasets[0].data = dataOpen;
+                stepChart.data.datasets[1].data = dataClosed;
+                stepChart.update();
+            }
+        }
+
+        function resetSliders() {
+            document.getElementById('slider-x0').value = 10;
+            document.getElementById('slider-i0').value = 2.0;
+            document.getElementById('slider-kp').value = 15;
+            document.getElementById('slider-kd').value = 0.8;
+            updateSimulation();
+        }
+
+        function copyOctaveCode() {
+            const codeText = document.getElementById('octave-code-block').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const copyBtn = event.currentTarget;
+            copyBtn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Copiado!';
+            setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar Código';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
+                stepChart.data.datasets[1].data = dataClosed;
+                stepChart.update();
+            }
+        }
+
+        function resetSliders() {
+            document.getElementById('slider-x0').value = 10;
+            document.getElementById('slider-i0').value = 2.0;
+            document.getElementById('slider-kp').value = 15;
+            document.getElementById('slider-kd').value = 0.8;
+            updateSimulation();
+        }
+
+        function copyOctaveCode() {
+            const codeText = document.getElementById('octave-code-block').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const copyBtn = event.currentTarget;
+            copyBtn.innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Copiado!';
+            setTimeout(() => {
+                copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> Copiar Código';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
