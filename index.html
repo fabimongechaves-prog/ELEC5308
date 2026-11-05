@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELEC-5308 | Levitación Magnética (Maglev)</title>
+    <title>ELEC-5308 | Levitación Magnética (Maglev) sin Fricción</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.mm/"></script>
-    <!-- Chart.js para simulaciones -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para simulaciones interactivas -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- KaTeX para renderizado matemático impecable -->
+    <!-- KaTeX para renderizar matemáticas perfectamente -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
@@ -17,48 +17,56 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-t-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
     <!-- Header Institucional -->
-    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50">
+    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 text-white font-bold p-2 rounded-lg">UH</div>
+                <div class="bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold p-2.5 rounded-xl shadow-lg">UH</div>
                 <div>
-                    <h1 class="text-lg font-bold text-white">Universidad Hispanoamericana</h1>
-                    <p class="text-xs text-slate-400">ELEC-5308 Análisis de Sistemas | Tema 10: Levitación Magnética</p>
+                    <h1 class="text-base md:text-lg font-bold text-white">Universidad Hispanoamericana</h1>
+                    <p class="text-xs text-slate-400">ELEC-5308 Análisis de Sistemas | Tema 10: Levitación Magnética (Maglev)</p>
                 </div>
             </div>
-            <!-- Navegación por Pestañas -->
-            <nav class="flex flex-wrap gap-2" id="nav-tabs">
-                <button onclick="switchTab(0)" class="tab-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 text-white transition">1. Arquitectura</button>
-                <button onclick="switchTab(1)" class="tab-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">2. Modelado</button>
-                <button onclick="switchTab(2)" class="tab-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">3. Bloques & Estados</button>
-                <button onclick="switchTab(3)" class="tab-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">4. Simulador</button>
-                <button onclick="switchTab(4)" class="tab-btn px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">5. Estabilidad</button>
+            <!-- Navegación por pestañas -->
+            <nav class="flex flex-wrap gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800" id="nav-tabs">
+                <button onclick="switchTab(0)" class="tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow">1. Arquitectura</button>
+                <button onclick="switchTab(1)" class="tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg text-slate-400 hover:text-slate-200 transition">2. Modelado</button>
+                <button onclick="switchTab(2)" class="tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg text-slate-400 hover:text-slate-200 transition">3. Bloques & Estados</button>
+                <button onclick="switchTab(3)" class="tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg text-slate-400 hover:text-slate-200 transition">4. Simulador & Octave</button>
+                <button onclick="switchTab(4)" class="tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg text-slate-400 hover:text-slate-200 transition">5. Estabilidad</button>
             </nav>
         </div>
     </header>
 
-    <!-- Contenedor Principal -->
-    <main class="max-w-7xl mx-auto p-4 md:p-6 flex-grow w-full">
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto p-4 md:p-8 flex-grow w-full space-y-6">
+
         <!-- SECCIÓN 0: ARQUITECTURA -->
         <section class="tab-content space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold text-indigo-400 mb-4">1. Contexto Industrial y Arquitectura de Control</h2>
-                <p class="text-slate-300 mb-4">Los sistemas de levitación magnética (Maglev) eliminan por completo el contacto mecánico y la fricción, permitiendo altas velocidades en transporte ferroviario y suspensión de rotores industriales.</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div class="bg-slate-950 p-5 rounded-lg border border-slate-800">
-                        <h3 class="font-semibold text-white mb-2">Componentes del Lazo</h3>
-                        <ul class="list-disc list-inside space-y-2 text-sm text-slate-300">
-                            <li><strong class="text-indigo-300">Planta:</strong> Electroimán y objeto suspendido de masa $m$.</li>
-                            <li><strong class="text-indigo-300">Sensor:</strong> Sensor óptico/inductivo de distancia (entrehierro $x$).</li>
-                            <li><strong class="text-indigo-300">Controlador:</strong> Algoritmo de control (Compensador PID).</li>
-                            <li><strong class="text-indigo-300">Actuador:</strong> Amplificador de potencia de corriente $i$.</li>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl">
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-400 mb-3">1. Contexto Industrial y Arquitectura de Control</h2>
+                <p class="text-slate-300 leading-relaxed mb-6">
+                    Los sistemas de levitación magnética (Maglev) eliminan por completo el contacto mecánico y la fricción, permitiendo aplicaciones críticas de alta velocidad en transporte ferroviario y rodamientos magnéticos industriales.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800/80 space-y-3">
+                        <h3 class="font-semibold text-white text-base flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Componentes del Lazo Cerrado
+                        </h3>
+                        <ul class="space-y-2 text-sm text-slate-300">
+                            <li><strong class="text-indigo-300">Planta:</strong> El electroimán y el objeto suspendido de masa $m$.</li>
+                            <li><strong class="text-indigo-300">Sensor (Transductor):</strong> Sensor óptico/inductivo que mide el entrehierro $x(t)$.</li>
+                            <li><strong class="text-indigo-300">Controlador:</strong> Sistema de control que calcula la corrección de corriente.</li>
+                            <li><strong class="text-indigo-300">Actuador:</strong> Amplificador de potencia de corriente $i(t)$.</li>
+                            <li><strong class="text-indigo-300">Perturbaciones:</strong> Variaciones de carga, vibraciones o fuerzas externas.</li>
                         </ul>
                     </div>
-                    <div class="bg-slate-950 p-5 rounded-lg border border-slate-800 flex items-center justify-center">
-                        <div class="text-center text-sm text-slate-400">
-                            [Esquema SVG de Arquitectura de Control con Realimentación]
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800/80 flex flex-col justify-center items-center text-center">
+                        <div class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2">Esquema del Sistema</div>
+                        <div class="p-4 bg-slate-900 rounded-lg border border-slate-800 w-full text-slate-300 text-sm">
+                            [Referencia Visual: Controlador $\rightarrow$ Amplificador $\rightarrow$ Electroimán $\rightarrow$ Entrehierro $x$ $\rightarrow$ Sensor]
                         </div>
                     </div>
                 </div>
@@ -67,44 +75,61 @@
 
         <!-- SECCIÓN 1: MODELADO -->
         <section class="tab-content hidden space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold text-indigo-400 mb-4">2. Modelado Matemático y Linealización</h2>
-                <p class="text-slate-300 mb-4">La fuerza magnética atractiva es no lineal respecto a la corriente y la distancia:</p>
-                <div class="bg-slate-950 p-4 rounded-lg text-center text-lg my-3 border border-slate-800">
-                    $F_m(i, x) = k \frac{i^2}{x^2}$
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl space-y-6">
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-400">2. Modelado Matemático Físico y Linealización</h2>
+                <p class="text-slate-300 leading-relaxed">
+                    La fuerza magnética atractiva ejercida sobre la masa $m$ es no lineal y depende del cuadrado de la corriente e inversamente del cuadrado de la distancia:
+                </p>
+                <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 text-center">
+                    $$F_m(i, x) = k \frac{i^2}{x^2}$$
                 </div>
-                <p class="text-slate-300 mt-4">Aplicando expansión en Serie de Taylor alrededor del punto de equilibrio $(X_0, I_0)$ obtenemos la linealización del sistema.</p>
+                <div class="space-y-3">
+                    <h3 class="font-semibold text-white">Linealización por Serie de Taylor</h3>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        Evaluando alrededor del punto de equilibrio $(X_0, I_0)$ donde el peso se equilibra con la fuerza magnética ($mg = k \frac{I_0^2}{X_0^2}$), obtenemos las derivadas parciales y la ecuación incremental linealizada:
+                    </p>
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 text-center text-sm md:text-base">
+                        $$\Delta \ddot{x} - \frac{2g}{X_0} \Delta x = -\frac{2g}{I_0} \Delta i$$
+                    </div>
+                </div>
             </div>
         </section>
 
         <!-- SECCIÓN 2: BLOQUES Y ESTADOS -->
         <section class="tab-content hidden space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold text-indigo-400 mb-4">3. Representación en Espacio de Estados</h2>
-                <div class="bg-slate-950 p-4 rounded-lg text-center text-lg my-3 border border-slate-800">
-                    $\begin{bmatrix} \dot{x}_1 \\ \dot{x}_2 \end{bmatrix} = \begin{bmatrix} 0 & 1 \\ \frac{2g}{X_0} & 0 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} + \begin{bmatrix} 0 \\ -\frac{2g}{I_0} \end{bmatrix} u$
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl space-y-6">
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-400">3. Representación en el Espacio de Estados $(A, B, C, D)$</h2>
+                <p class="text-slate-300 text-sm">
+                    Definiendo las variables de estado $x_1 = \Delta x$ (posición) y $x_2 = \Delta \dot{x}$ (velocidad):
+                </p>
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center overflow-x-auto">
+                    $$\begin{bmatrix} \dot{x}_1 \\ \dot{x}_2 \end{bmatrix} = \begin{bmatrix} 0 & 1 \\ \frac{2g}{X_0} & 0 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} + \begin{bmatrix} 0 \\ -\frac{2g}{I_0} \end{bmatrix} u$$
                 </div>
             </div>
         </section>
 
-        <!-- SECCIÓN 3: SIMULADOR -->
+        <!-- SECCIÓN 3: SIMULADOR Y OCTAVE -->
         <section class="tab-content hidden space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold text-indigo-400 mb-4">4. Simulador Web Interactivo</h2>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl space-y-6">
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-400">4. Simulador Interactivo & Validación en GNU Octave</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-4">
-                        <h3 class="font-semibold text-white">Parámetros Físicos</h3>
+                    <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+                        <h3 class="font-semibold text-white text-sm uppercase tracking-wider text-indigo-400">Controles de Simulación</h3>
                         <div>
-                            <label class="text-xs text-slate-400">Entrehierro $X_0$ (m): <span id="val-x0">0.01</span></label>
+                            <label class="text-xs text-slate-400 block mb-1">Entrehierro de equilibrio $X_0$ (m): <span id="val-x0" class="text-white font-bold">0.01</span></label>
                             <input type="range" id="slider-x0" min="0.005" max="0.03" step="0.001" value="0.01" class="w-full accent-indigo-500" oninput="updateSimulation()">
                         </div>
                         <div>
-                            <label class="text-xs text-slate-400">Corriente $I_0$ (A): <span id="val-i0">2.0</span></label>
+                            <label class="text-xs text-slate-400 block mb-1">Corriente de equilibrio $I_0$ (A): <span id="val-i0" class="text-white font-bold">2.0</span></label>
                             <input type="range" id="slider-i0" min="0.5" max="5.0" step="0.1" value="2.0" class="w-full accent-indigo-500" oninput="updateSimulation()">
                         </div>
+                        <div class="pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-1">
+                            <p><strong>Polo en Lazo Abierto:</strong> <span id="txt-pole" class="text-rose-400 font-mono">+14.00</span></p>
+                            <p><strong>Estado:</strong> <span class="text-rose-400 font-semibold">Inestable (RHP)</span></p>
+                        </div>
                     </div>
-                    <div class="lg:col-span-2 bg-slate-950 p-4 rounded-lg border border-slate-800">
-                        <canvas id="simulationChart" height="150"></canvas>
+                    <div class="lg:col-span-2 bg-slate-950 p-5 rounded-xl border border-slate-800 flex flex-col justify-center">
+                        <canvas id="simulationChart" height="130"></canvas>
                     </div>
                 </div>
             </div>
@@ -112,17 +137,23 @@
 
         <!-- SECCIÓN 4: ESTABILIDAD -->
         <section class="tab-content hidden space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
-                <h2 class="text-xl font-bold text-indigo-400 mb-4">5. Análisis de Estabilidad y Conclusiones</h2>
-                <p class="text-slate-300">La presencia del polo positivo en lazo abierto confirma la inestabilidad inherente, la cual se corrige eficazmente mediante realimentación de estados o un controlador compensador.</p>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-xl space-y-6">
+                <h2 class="text-xl md:text-2xl font-bold text-indigo-400">5. Análisis de Estabilidad y Conclusiones</h2>
+                <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3 text-slate-300 text-sm leading-relaxed">
+                    <p><strong class="text-white">Polos en Lazo Abierto:</strong> El sistema posee un polo positivo ($s = +\sqrt{2g/X_0}$), lo que confirma su inestabilidad intrínseca en lazo abierto.</p>
+                    <p><strong class="text-white">Estabilización:</strong> Mediante un controlador con realimentación de estados o acción derivativa, los polos se reubican en el semiplano izquierdo, garantizando una suspensión estable y sin fricción.</p>
+                </div>
             </div>
         </section>
+
     </main>
 
+    <!-- Footer -->
     <footer class="bg-slate-900 border-t border-slate-800 text-center py-4 text-xs text-slate-500">
         Universidad Hispanoamericana - Ingeniería Mecatrónica & Electrónica © 2026
     </footer>
 
+    <!-- Scripts de interactividad y gráficos -->
     <script>
         function switchTab(index) {
             const contents = document.querySelectorAll('.tab-content');
@@ -131,10 +162,11 @@
                 c.classList.toggle('hidden', i !== index);
             });
             buttons.forEach((b, i) => {
-                b.classList.toggle('bg-indigo-600', i === index);
-                b.classList.toggle('text-white', i === index);
-                b.classList.toggle('bg-slate-800', i !== index);
-                b.classList.toggle('text-slate-300', i !== index);
+                if (i === index) {
+                    b.className = "tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg bg-indigo-600 text-white transition shadow";
+                } else {
+                    b.className = "tab-btn px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg text-slate-400 hover:text-slate-200 transition";
+                }
             });
         }
 
@@ -144,23 +176,35 @@
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Array.from({length: 50}, (_, i) => (i * 0.02).toFixed(2)),
+                    labels: Array.from({length: 40}, (_, i) => (i * 0.02).toFixed(2)),
                     datasets: [
-                        { label: 'Lazo Abierto (Inestable)', data: Array.from({length: 50}, (_, i) => Math.exp(i*0.1)), borderColor: '#f43f5e', borderWidth: 2 },
-                        { label: 'Lazo Cerrado (Estable)', data: Array.from({length: 50}, (_, i) => 1 - Math.exp(-i*0.2)*Math.cos(i*0.3)), borderColor: '#6366f1', borderWidth: 2 }
+                        { label: 'Lazo Abierto (Inestable)', data: Array.from({length: 40}, (_, i) => Math.exp(i*0.12)), borderColor: '#f43f5e', borderWidth: 2, pointRadius: 0 },
+                        { label: 'Lazo Cerrado (Estable)', data: Array.from({length: 40}, (_, i) => 1 - Math.exp(-i*0.25)*Math.cos(i*0.4)), borderColor: '#6366f1', borderWidth: 2, pointRadius: 0 }
                     ]
                 },
-                options: { responsive: true, scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { color: '#1e293b' } } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+                    scales: { 
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } }, 
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b' } } 
+                    } 
+                }
             });
         }
 
         function updateSimulation() {
-            const x0 = document.getElementById('slider-x0').value;
-            const i0 = document.getElementById('slider-i0').value;
-            document.getElementById('val-x0').innerText = x0;
-            document.getElementById('val-i0').innerText = i0;
+            const x0 = parseFloat(document.getElementById('slider-x0').value);
+            const i0 = parseFloat(document.getElementById('slider-i0').value);
+            document.getElementById('val-x0').innerText = x0.toFixed(3);
+            document.getElementById('val-i0').innerText = i0.toFixed(1);
+            
+            const g = 9.81;
+            const poleVal = Math.sqrt((2 * g) / x0);
+            document.getElementById('txt-pole').innerText = '+' + poleVal.toFixed(2);
+
             if(myChart) {
-                myChart.data.datasets[0].data = Array.from({length: 50}, (_, i) => Math.exp(i * 0.05 / x0));
+                myChart.data.datasets[0].data = Array.from({length: 40}, (_, i) => Math.exp(i * 0.05 * poleVal / 10));
                 myChart.update();
             }
         }
